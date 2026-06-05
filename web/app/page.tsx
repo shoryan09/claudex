@@ -64,6 +64,13 @@ export default async function Home() {
               </button>
             </form>
 
+            <Link
+  href="/leaderboard"
+  className="mt-6 inline-block text-sm text-[#6B6862] underline-offset-4 transition hover:text-[#CC785C] hover:underline"
+>
+  Or peek at the leaderboard →
+</Link>
+
             <p className="mt-6 text-xs text-[#9B988F]">
               Only aggregate stats are stored — never your code or prompts.
             </p>
@@ -96,13 +103,20 @@ export default async function Home() {
               </pre>
             </div>
 
-            <Link
-              href="/dashboard"
-              className="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#141413] px-7 py-3.5 text-[15px] font-medium text-[#FAF9F5] shadow-sm transition hover:bg-black hover:shadow-md"
-            >
-              Open your dashboard
-              <span aria-hidden>→</span>
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-3">
+  <Link
+    href="/dashboard"
+    className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#141413] px-7 py-3.5 text-[15px] font-medium text-[#FAF9F5] shadow-sm transition hover:bg-black hover:shadow-md"
+  >
+    Open your dashboard <span aria-hidden>→</span>
+  </Link>
+  <Link
+    href="/leaderboard"
+    className="inline-flex cursor-pointer items-center rounded-full border border-[#E0DDD2] px-7 py-3.5 text-[15px] font-medium text-[#141413] transition hover:border-[#CC785C] hover:text-[#CC785C]"
+  >
+    Leaderboard
+  </Link>
+</div>
           </div>
         )}
       </div>

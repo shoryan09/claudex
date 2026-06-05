@@ -1,12 +1,7 @@
-import Link from "next/link";
-import { Fraunces, Inter } from "next/font/google";
 import { auth } from "@/auth";
 import { connectDB } from "@/lib/mongo";
 import { User } from "@/models/user";
 import { getWrapped } from "@/lib/stats";
-
-const serif = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600"] });
-const sans = Inter({ subsets: ["latin"] });
 
 function fmt(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
@@ -18,172 +13,102 @@ function fmtHour(h: number) {
   return `${hr} ${h < 12 ? "AM" : "PM"}`;
 }
 
-// earthy, premium palette for the model split
-const COLORS = ["#CC785C", "#5E6B7D", "#7A8B6F", "#C9A87C"];
+const BAR = ["bg-orange-500", "bg-purple-500", "bg-sky-500", "bg-emerald-500"];
+const DOT = ["text-orange-400", "text-purple-400", "text-sky-400", "text-emerald-400"];
 
-const CARD =
-  "rounded-2xl border border-[#ECEAE2] bg-white p-6 shadow-[0_1px_2px_rgba(20,20,19,0.05)]";
-const LABEL = "text-xs font-medium uppercase tracking-[0.14em] text-[#9B988F]";
-
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ range?: string }>;
-}) {
-  const sp = await searchParams;
-  const range: "7d" | "30d" = sp.range === "7d" ? "7d" : "30d";
-
+export default async function Dashboard() {
   const session = await auth();
   if (!session?.user)
-    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#FAF9F5] text-[#141413]`}>Please sign in on the home page first.</main>;
+    return <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">Please sign in on the home page first.</main>;
 
   await connectDB();
   const user = await User.findOne({ githubId: (session as any).githubId });
   if (!user)
-    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#FAF9F5] text-[#141413]`}>No user found.</main>;
+    return <main className="min-h-screen bg-neutral-950 text-neutral-100 p-10">No user found.</main>;
 
-  const w = await getWrapped(String(user._id), range);
+  const w = await getWrapped(String(user._id), "30d");
   const modelTotal = w.modelSplit.reduce((s, m) => s + m.tokens, 0) || 1;
   const topMax = w.topProjects[0]?.tokens || 1;
 
-  const stats = [
+  const statCards = [
     { label: "Messages", value: fmt(w.messages) },
     { label: "Sessions", value: String(w.sessions) },
     { label: "Active days", value: String(w.activeDays) },
     { label: "Longest streak", value: `${w.longestStreak}d` },
   ];
 
-  const tab = (r: "7d" | "30d", label: string) => (
-    <Link
-      href={`/dashboard?range=${r}`}
-      className={`cursor-pointer rounded-full px-4 py-1.5 text-sm transition ${
-        range === r ? "bg-white text-[#141413] shadow-sm" : "text-[#6B6862] hover:text-[#141413]"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-
   return (
-    <main className={`${sans.className} min-h-screen bg-[#FAF9F5] text-[#141413]`}>
-      {/* top bar */}
-      <header className="border-b border-[#ECEAE2]">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
-          <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>claudex</Link>
-          <span className="text-sm text-[#6B6862]">{session.user.name}</span>
-        </div>
-      </header>
+    <main className="min-h-screen bg-neutral-950 text-neutral-100 px-6 py-10">
+      <div className="mx-auto max-w-3xl">
+        <p className="text-sm text-neutral-400">{session.user.name} · last 30 days</p>
+        <h1 className="mt-1 text-3xl font-bold">Your Claude Code Wrapped</h1>
 
-      <div className="mx-auto max-w-4xl px-6 py-10">
-        {/* title + controls */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm text-[#9B988F]">last {range === "7d" ? "7" : "30"} days</p>
-            <h1 className={`${serif.className} mt-1 text-4xl tracking-tight`}>Your Wrapped</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="/api/og"
-              target="_blank"
-              className="cursor-pointer rounded-full border border-[#E0DDD2] px-4 py-1.5 text-sm text-[#6B6862] transition hover:border-[#CC785C] hover:text-[#CC785C]"
-            >
-              Share card
-            </a>
-            <div className="inline-flex rounded-full bg-[#F0EEE6] p-1">
-              {tab("7d", "Week")}
-              {tab("30d", "Month")}
+        {/* hero */}
+        <div className="mt-8 rounded-2xl border border-orange-500/20 bg-orange-500/10 p-8">
+          <p className="text-xs uppercase tracking-wide text-neutral-400">Total tokens</p>
+          <p className="mt-2 text-6xl font-bold tabular-nums">{fmt(w.totalTokens)}</p>
+          <p className="mt-2 text-sm text-neutral-400">
+            {fmt(w.inTokens)} in · {fmt(w.outTokens)} out · {fmt(w.cacheCreate)} cache · {fmt(w.cacheRead)} cache reads
+          </p>
+        </div>
+
+        {/* stat grid */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {statCards.map((s) => (
+            <div key={s.label} className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+              <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+              <p className="mt-1 text-xs text-neutral-400">{s.label}</p>
             </div>
+          ))}
+        </div>
+
+        {/* busiest */}
+        <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <p className="text-xs text-neutral-400">Busiest day</p>
+            <p className="mt-1 text-xl font-semibold">{w.busiestDay?.date ?? "—"}</p>
+            <p className="text-sm text-neutral-500">{w.busiestDay ? fmt(w.busiestDay.tokens) + " tokens" : ""}</p>
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <p className="text-xs text-neutral-400">Busiest hour</p>
+            <p className="mt-1 text-xl font-semibold">{w.busiestHour ? fmtHour(w.busiestHour.hour) : "—"}</p>
+            <p className="text-sm text-neutral-500">{w.busiestHour ? fmt(w.busiestHour.tokens) + " tokens" : ""}</p>
           </div>
         </div>
 
-        <div className="mt-8 space-y-5">
-          {/* archetype */}
-          <div className="rounded-2xl border border-[#E8D9D1] bg-[#F7ECE6] p-6">
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#CC785C]">Your archetype</p>
-            <p className={`${serif.className} mt-2 text-3xl tracking-tight`}>
-              {w.archetype.emoji} {w.archetype.name}
-            </p>
-            <p className="mt-2 text-sm text-[#8A6F61]">{w.archetype.reason}</p>
+        {/* model split */}
+        <div className="mt-6 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+          <p className="text-sm font-medium">Model split</p>
+          <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-neutral-800">
+            {w.modelSplit.map((m, i) => (
+              <div key={m.model} className={BAR[i % 4]} style={{ width: `${(m.tokens / modelTotal) * 100}%` }} />
+            ))}
           </div>
-
-          {/* total tokens hero */}
-          <div className={CARD + " p-8"}>
-            <p className={LABEL}>Total tokens</p>
-            <p className={`${serif.className} mt-2 text-7xl leading-none tracking-tight tabular-nums`}>
-              {fmt(w.totalTokens)}
-            </p>
-            <p className="mt-4 text-sm text-[#6B6862]">
-              {fmt(w.inTokens)} in · {fmt(w.outTokens)} out · {fmt(w.cacheCreate)} cache · {fmt(w.cacheRead)} reads
-            </p>
-          </div>
-
-          {/* stat grid */}
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className={CARD + " p-5"}>
-                <p className={`${serif.className} text-3xl tabular-nums`}>{s.value}</p>
-                <p className="mt-2 text-xs font-medium uppercase tracking-wider text-[#9B988F]">{s.label}</p>
+          <div className="mt-3 space-y-1">
+            {w.modelSplit.map((m, i) => (
+              <div key={m.model} className="flex justify-between text-sm">
+                <span className="text-neutral-300"><span className={DOT[i % 4]}>●</span> {m.model}</span>
+                <span className="tabular-nums text-neutral-400">{((m.tokens / modelTotal) * 100).toFixed(0)}% · {fmt(m.tokens)}</span>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* insight */}
-          <div className={CARD + " p-5"}>
-            <p className={LABEL}>Insight</p>
-            <p className="mt-2 text-[15px] leading-relaxed text-[#3F3D39]">{w.insight}</p>
-          </div>
-
-          {/* busiest */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div className={CARD + " p-5"}>
-              <p className={LABEL}>Busiest day</p>
-              <p className={`${serif.className} mt-2 text-2xl`}>{w.busiestDay?.date ?? "—"}</p>
-              <p className="mt-1 text-sm text-[#9B988F]">{w.busiestDay ? fmt(w.busiestDay.tokens) + " tokens" : ""}</p>
-            </div>
-            <div className={CARD + " p-5"}>
-              <p className={LABEL}>Busiest hour</p>
-              <p className={`${serif.className} mt-2 text-2xl`}>{w.busiestHour ? fmtHour(w.busiestHour.hour) : "—"}</p>
-              <p className="mt-1 text-sm text-[#9B988F]">{w.busiestHour ? fmt(w.busiestHour.tokens) + " tokens" : ""}</p>
-            </div>
-          </div>
-
-          {/* model split */}
-          <div className={CARD + " p-6"}>
-            <p className={LABEL}>Model split</p>
-            <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-[#EFEDE4]">
-              {w.modelSplit.map((m, i) => (
-                <div key={m.model} style={{ width: `${(m.tokens / modelTotal) * 100}%`, backgroundColor: COLORS[i % COLORS.length] }} />
-              ))}
-            </div>
-            <div className="mt-4 space-y-2">
-              {w.modelSplit.map((m, i) => (
-                <div key={m.model} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-[#3F3D39]">
-                    <span style={{ width: 9, height: 9, borderRadius: 9, backgroundColor: COLORS[i % COLORS.length] }} />
-                    {m.model}
-                  </span>
-                  <span className="tabular-nums text-[#9B988F]">{((m.tokens / modelTotal) * 100).toFixed(0)}% · {fmt(m.tokens)}</span>
+        {/* top projects */}
+        <div className="mt-6 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+          <p className="text-sm font-medium">Top projects</p>
+          <div className="mt-3 space-y-3">
+            {w.topProjects.map((p) => (
+              <div key={p.project}>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-200">{p.project}</span>
+                  <span className="tabular-nums text-neutral-400">{fmt(p.tokens)}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* top projects */}
-          <div className={CARD + " p-6"}>
-            <p className={LABEL}>Top projects</p>
-            <div className="mt-4 space-y-4">
-              {w.topProjects.map((p) => (
-                <div key={p.project}>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#3F3D39]">{p.project}</span>
-                    <span className="tabular-nums text-[#9B988F]">{fmt(p.tokens)}</span>
-                  </div>
-                  <div className="mt-1.5 h-2 rounded-full bg-[#EFEDE4]">
-                    <div className="h-2 rounded-full" style={{ width: `${(p.tokens / topMax) * 100}%`, backgroundColor: "#CC785C" }} />
-                  </div>
+                <div className="mt-1 h-2 rounded-full bg-neutral-800">
+                  <div className="h-2 rounded-full bg-orange-500" style={{ width: `${(p.tokens / topMax) * 100}%` }} />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
