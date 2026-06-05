@@ -72,5 +72,5 @@ export async function POST(req: NextRequest) {
     written: ops.length,
     upserted: res.upsertedCount,
     modified: res.modifiedCount,
-  })
+  });
 }
