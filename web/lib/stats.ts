@@ -1,25 +1,31 @@
 // web/lib/stats.ts
-// Reads a user's buckets and computes the Wrapped metrics for a time range.
 import { connectDB } from "@/lib/mongo";
 import { Bucket } from "@/models/bucket";
 
 export type Wrapped = {
   range: string;
-  totalTokens: number; // in + out + cacheCreate (the "real" spend)
+  totalTokens: number;
   inTokens: number;
   outTokens: number;
   cacheCreate: number;
   cacheRead: number;
   messages: number;
-  sessions: number;      // approx — overcounts sessions that span multiple hours
-  activeHours: number;   // distinct (date, hour)
-  activeDays: number;    // distinct dates
-  longestStreak: number; // consecutive active days
+  sessions: number;
+  activeHours: number;
+  activeDays: number;
+  longestStreak: number;
   modelSplit: { model: string; tokens: number }[];
   topProjects: { project: string; tokens: number }[];
   busiestDay: { date: string; tokens: number } | null;
   busiestHour: { hour: number; tokens: number } | null;
+  archetype: { name: string; emoji: string; reason: string };
+  insight: string;
 };
+
+function fmtHour(h: number) {
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr} ${h < 12 ? "AM" : "PM"}`;
+}
 
 export async function getWrapped(
   owner: string,
@@ -32,10 +38,7 @@ export async function getWrapped(
   cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  const buckets: any[] = await Bucket.find({
-    owner,
-    date: { $gte: cutoffStr },
-  }).lean();
+  const buckets: any[] = await Bucket.find({ owner, date: { $gte: cutoffStr } }).lean();
 
   let inTokens = 0, outTokens = 0, cacheCreate = 0, cacheRead = 0, messages = 0, sessions = 0;
   const byModel = new Map<string, number>();
@@ -80,7 +83,6 @@ export async function getWrapped(
   for (const [hour, tokens] of byHour)
     if (!busiestHour || tokens > busiestHour.tokens) busiestHour = { hour, tokens };
 
-  // longest run of consecutive active days
   const dates = [...dateSet].sort();
   let longestStreak = 0, cur = 0;
   let prev: Date | null = null;
@@ -92,6 +94,36 @@ export async function getWrapped(
     prev = cd;
   }
 
+  // ---- archetype: time-of-day × session length ----
+  const msgsPerSession = sessions > 0 ? messages / sessions : 0;
+  const hour = busiestHour?.hour ?? 12;
+  let timeName = "Daylight Coder", emoji = "☀️";
+  if (hour <= 4 || hour >= 22) { timeName = "Night Owl"; emoji = "🦉"; }
+  else if (hour <= 8) { timeName = "Dawn Raider"; emoji = "🌅"; }
+  else if (hour >= 18) { timeName = "Evening Grinder"; emoji = "🌆"; }
+
+  let style = "Steady Hand";
+  if (msgsPerSession >= 25) style = "Marathoner";
+  else if (sessions > 0 && msgsPerSession <= 8) style = "Sprinter";
+
+  const archetype = {
+    name: `${timeName} ${style}`,
+    emoji,
+    reason: `Peaks around ${fmtHour(hour)}, ~${Math.round(msgsPerSession)} messages per session.`,
+  };
+
+  // ---- insight: cache efficiency ----
+  const cacheTotal = cacheRead + cacheCreate;
+  const cacheEff = cacheTotal > 0 ? cacheRead / cacheTotal : 0;
+  const pct = Math.round(cacheEff * 100);
+  let insight: string;
+  if (cacheEff >= 0.85)
+    insight = `${pct}% of your context was reused from cache — Claude Code is caching very efficiently for you.`;
+  else if (cacheEff >= 0.6)
+    insight = `${pct}% of your context came from cache — decent reuse, with a bit of room to tighten.`;
+  else
+    insight = `Only ${pct}% of your context was cached — you're rebuilding context often, which burns extra tokens.`;
+
   return {
     range,
     totalTokens, inTokens, outTokens, cacheCreate, cacheRead,
@@ -100,5 +132,6 @@ export async function getWrapped(
     activeDays: dateSet.size,
     longestStreak,
     modelSplit, topProjects, busiestDay, busiestHour,
+    archetype, insight,
   };
 }
