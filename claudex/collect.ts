@@ -77,8 +77,9 @@ function runScan(): Summary {
     if (entry.uuid && seen.has(entry.uuid)) return;
     if (entry.uuid) seen.add(entry.uuid);
     const ts = new Date(entry.timestamp ?? Date.now());
-    const date = ts.toISOString().slice(0, 10);
-    const hour = ts.getUTCHours();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const date = `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())}`;
+    const hour = ts.getHours(); // local hour — collector runs on the user's machine
     const project = entry.cwd ? path.basename(entry.cwd) : "unknown";
     const sessionId = entry.sessionId ?? "unknown";
     const key = `${date}|${hour}|${model}|${project}`;
