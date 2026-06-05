@@ -1,9 +1,5 @@
-// collect.ts — Phase 1, step 5: the claudex CLI.
-//   npx tsx collect.ts login <token> --server <url>   save credentials
-//   npx tsx collect.ts sync [--force]                 scan + push to server
-//   npx tsx collect.ts watch                          auto scan + push on activity
-//   npx tsx collect.ts status                         show config + current totals
-//   npx tsx collect.ts                                (no args) print the bucket table
+#!/usr/bin/env node
+// collect.ts — claudex CLI: login / sync / watch / status / enable / disable
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -79,14 +75,13 @@ function runScan(): Summary {
     const ts = new Date(entry.timestamp ?? Date.now());
     const pad = (n: number) => String(n).padStart(2, "0");
     const date = `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())}`;
-    const hour = ts.getHours(); // local hour — collector runs on the user's machine
+    const hour = ts.getHours();
     const project = entry.cwd ? path.basename(entry.cwd) : "unknown";
     const sessionId = entry.sessionId ?? "unknown";
     const key = `${date}|${hour}|${model}|${project}`;
     let b = buckets.get(key);
     if (!b) {
-      b = { date, hour, model, project, inTokens: 0, outTokens: 0,
-            cacheCreate: 0, cacheRead: 0, messages: 0, sessions: [] };
+      b = { date, hour, model, project, inTokens: 0, outTokens: 0, cacheCreate: 0, cacheRead: 0, messages: 0, sessions: [] };
       buckets.set(key, b);
     }
     b.inTokens += usage.input_tokens ?? 0;
@@ -144,7 +139,6 @@ function printBuckets() {
     console.log(`${b.date} ${String(b.hour).padStart(2, "0")}h | ${b.model} | ${b.project} | in:${b.inTokens} out:${b.outTokens} cacheR:${b.cacheRead} msgs:${b.messages} sessions:${b.sessions.length}`);
 }
 
-// Build the privacy-safe payload (only aggregates, never content) and POST it.
 async function syncToServer(force = false) {
   const cfg = loadConfig();
   if (!cfg.token || !cfg.serverUrl) {
@@ -160,7 +154,7 @@ async function syncToServer(force = false) {
     date: b.date, hour: b.hour, model: b.model, project: b.project,
     inTokens: b.inTokens, outTokens: b.outTokens,
     cacheCreate: b.cacheCreate, cacheRead: b.cacheRead,
-    messages: b.messages, sessions: b.sessions.length, // count only, not the ids
+    messages: b.messages, sessions: b.sessions.length,
   }));
   try {
     const res = await fetch(cfg.serverUrl, {
@@ -192,16 +186,47 @@ function startWatch() {
   console.log(`Watching ${PROJECTS_DIR} — Ctrl+C to stop.`);
 }
 
+// ---- run-at-login registration (best-effort; never crashes login) ----
+async function getLauncher() {
+  const AutoLaunch = (await import("auto-launch")).default as any;
+  return new AutoLaunch({
+    name: "claudex",
+    path: process.execPath,           // the node binary
+    args: [process.argv[1], "watch"], // run this script in watch mode at login
+  });
+}
+async function enableAutostart() {
+  try {
+    const launcher = await getLauncher();
+    if (!(await launcher.isEnabled())) await launcher.enable();
+    console.log("Auto-start enabled — claudex will watch on every login.");
+  } catch (e: any) {
+    console.log(`(Auto-start not set: ${e.message}. Run 'claudex watch' manually if needed.)`);
+  }
+}
+async function disableAutostart() {
+  try {
+    const launcher = await getLauncher();
+    await launcher.disable();
+    console.log("Auto-start disabled.");
+  } catch (e: any) {
+    console.log(`(Could not disable auto-start: ${e.message})`);
+  }
+}
+
 const program = new Command();
 program.name("claudex").description("Claude Code usage tracker").version("0.1.0");
 
 program.command("login").argument("<token>").option("--server <url>", "ingest endpoint URL")
-  .action((token: string, opts: { server?: string }) => {
+  .action(async (token: string, opts: { server?: string }) => {
     const cfg = loadConfig();
     cfg.token = token;
     if (opts.server) cfg.serverUrl = opts.server;
     saveConfig(cfg);
     console.log(`Saved. token: set | server: ${cfg.serverUrl ?? "(none — pass --server)"}`);
+    await enableAutostart();
+    runScan();
+    await syncToServer(true);
   });
 
 program.command("status").action(() => {
@@ -215,7 +240,9 @@ program.command("sync").option("--force", "ignore the 60s throttle")
   .action(async (opts: { force?: boolean }) => { runScan(); await syncToServer(!!opts.force); });
 
 program.command("watch").action(() => startWatch());
+program.command("enable").description("run claudex at every login").action(enableAutostart);
+program.command("disable").description("stop running at login").action(disableAutostart);
 
-program.action(() => { runScan(); printBuckets(); }); // default: no subcommand
+program.action(() => { runScan(); printBuckets(); });
 
 program.parseAsync();
