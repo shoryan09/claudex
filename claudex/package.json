@@ -1,22 +1,22 @@
 {
   "name": "claudex",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "Claude Code usage analytics CLI",
+  "type": "module",
+  "bin": { "claudex": "./dist/collect.js" },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "devDependencies": {
-    "@types/node": "^25.9.1",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "build": "tsup",
+    "dev": "tsx collect.ts"
   },
   "dependencies": {
-    "chokidar": "^5.0.0",
-    "commander": "^15.0.0"
+    "auto-launch": "^5.0.6",
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
   }
 }
