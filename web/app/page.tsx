@@ -99,7 +99,7 @@ export default async function Home() {
                 Connect your CLI
               </p>
               <pre className="overflow-x-auto rounded-xl border border-[#E5E2D9] bg-[#F0EEE6] px-4 py-3 font-mono text-sm text-[#6B6862]">
-                {`npm install -g claudiom\nclaudiom login ${cliToken} --server https://YOUR-APP.vercel.app/api/ingest`}
+                {`npm install -g contextis\ncontextis login ${cliToken} --server https://YOUR-APP.vercel.app/api/ingest`}
               </pre>
             </div>
 

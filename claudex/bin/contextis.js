@@ -16,7 +16,7 @@ function getDataDir() {
   else if (process.platform === "darwin")
     base = path.join(home, "Library", "Application Support");
   else base = process.env.XDG_DATA_HOME || path.join(home, ".local", "share");
-  const dir = path.join(base, "claudex");
+  const dir = path.join(base, "contextis");
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -147,7 +147,7 @@ function printBuckets() {
 async function syncToServer(force = false) {
   const cfg = loadConfig();
   if (!cfg.token || !cfg.serverUrl) {
-    console.log("Not configured. Run: claudiom login <token> --server <url>");
+    console.log("Not configured. Run: contextis login <token> --server <url>");
     return;
   }
   if (!force && cfg.lastSyncAt && Date.now() - cfg.lastSyncAt < 6e4) {
@@ -201,9 +201,10 @@ function startWatch() {
   }, 60 * 60 * 1e3);
   console.log(`Watching ${PROJECTS_DIR} \u2014 Ctrl+C to stop.`);
 }
-var LAUNCH_LABEL = "com.claudex.watch";
+var LAUNCH_LABEL = "com.contextis.watch";
+var RUN_KEY_NAME = "contextis-watch";
 function winVbsPath() {
-  return path.join(getDataDir(), "claudex-watch.vbs");
+  return path.join(getDataDir(), "contextis-watch.vbs");
 }
 function winLegacyStartupVbsPath() {
   const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
@@ -224,7 +225,7 @@ async function enableAutostart() {
   const target = resolveTarget();
   if (!target) {
     console.log(
-      "Auto-start needs the built binary. Run: npm run build && npm link, then `claudiom login <token> --server <url>` (not `npx tsx`)."
+      "Auto-start needs the built binary. Run: npm run build && npm link, then `contextis login <token> --server <url>` (not `npx tsx`)."
     );
     return;
   }
@@ -249,7 +250,7 @@ s.Run Chr(34) & "${nodeQ}" & Chr(34) & " " & Chr(34) & "${scriptQ}" & Chr(34) & 
 $vbs = '${vbsLit}'\r
 $cmd = 'wscript.exe "' + $vbs + '"'\r
 $run = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'\r
-New-ItemProperty -Path $run -Name 'claudex-watch' -Value $cmd -PropertyType String -Force | Out-Null\r
+New-ItemProperty -Path $run -Name '${RUN_KEY_NAME}' -Value $cmd -PropertyType String -Force | Out-Null\r
 `;
       fs.writeFileSync(ps1, regScript);
       execFileSync(
@@ -257,7 +258,7 @@ New-ItemProperty -Path $run -Name 'claudex-watch' -Value $cmd -PropertyType Stri
         ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1],
         { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
       );
-      console.log("Auto-start enabled (Windows Run key: claudex-watch).");
+      console.log("Auto-start enabled (Windows Run key: contextis-watch).");
     } else if (process.platform === "darwin") {
       const plist = macPlistPath();
       fs.mkdirSync(path.dirname(plist), { recursive: true });
@@ -291,13 +292,13 @@ New-ItemProperty -Path $run -Name 'claudex-watch' -Value $cmd -PropertyType Stri
       console.log(`Auto-start enabled (macOS LaunchAgent): ${plist}`);
     } else {
       const AutoLaunch = (await import("auto-launch")).default;
-      const launcher = new AutoLaunch({ name: "claudex", path: node, args: [script, "watch"] });
+      const launcher = new AutoLaunch({ name: "contextis", path: node, args: [script, "watch"] });
       if (!await launcher.isEnabled()) await launcher.enable();
       console.log("Auto-start enabled (auto-launch).");
     }
   } catch (e) {
     const detail = e && e.stderr && String(e.stderr).trim() || e && e.message || String(e);
-    console.log(`(Auto-start not set: ${detail}. Run 'claudex watch' manually if needed.)`);
+    console.log(`(Auto-start not set: ${detail}. Run 'contextis watch' manually if needed.)`);
   }
 }
 async function disableAutostart() {
@@ -309,7 +310,7 @@ async function disableAutostart() {
           [
             "-NoProfile",
             "-Command",
-            "Remove-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -Name 'claudex-watch' -ErrorAction SilentlyContinue"
+            `Remove-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '${RUN_KEY_NAME}' -ErrorAction SilentlyContinue`
           ],
           { stdio: "ignore" }
         );
@@ -333,7 +334,7 @@ async function disableAutostart() {
       console.log("Auto-start disabled.");
     } else {
       const AutoLaunch = (await import("auto-launch")).default;
-      const launcher = new AutoLaunch({ name: "claudex", path: process.execPath, args: [process.argv[1], "watch"] });
+      const launcher = new AutoLaunch({ name: "contextis", path: process.execPath, args: [process.argv[1], "watch"] });
       await launcher.disable();
       console.log("Auto-start disabled.");
     }
@@ -342,7 +343,7 @@ async function disableAutostart() {
   }
 }
 var program = new Command();
-program.name("claudiom").description("Claude Code usage tracker").version("0.1.0");
+program.name("contextis").description("Claude Code usage tracker").version("0.1.0");
 program.command("login").argument("<token>").option("--server <url>", "ingest endpoint URL").action(async (token, opts) => {
   const cfg = loadConfig();
   cfg.token = token;
@@ -364,7 +365,7 @@ program.command("sync").option("--force", "ignore the 60s throttle").action(asyn
   await syncToServer(!!opts.force);
 });
 program.command("watch").action(() => startWatch());
-program.command("enable").description("run claudex at every login").action(enableAutostart);
+program.command("enable").description("run contextis at every login").action(enableAutostart);
 program.command("disable").description("stop running at login").action(disableAutostart);
 program.action(() => {
   runScan();
