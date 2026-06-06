@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import { auth, signIn, signOut } from "@/auth";
 import { connectDB } from "@/lib/mongo";
 import { User } from "@/models/user";
+import { Analytics } from "@vercel/analytics/next"
 
 const serif = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600"] });
 const sans = Inter({ subsets: ["latin"] });
