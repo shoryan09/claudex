@@ -104,7 +104,7 @@ export default async function Dashboard({
 
       <header className="relative border-b border-[#ECEAE2]/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Claudiom</Link>
+          <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contexta</Link>
           <span className="text-sm text-[#6B6862]">{session.user.name}</span>
         </div>
       </header>

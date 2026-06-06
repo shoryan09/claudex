@@ -29,7 +29,7 @@ export default async function Home() {
     <main className={`${sans.className} flex min-h-screen flex-col bg-[#FAF9F5] text-[#141413]`}>
       {/* top bar */}
       <header className="flex items-center justify-between px-8 py-6">
-        <span className={`${serif.className} text-xl font-medium tracking-tight`}>Claudiom</span>
+        <span className={`${serif.className} text-xl font-medium tracking-tight`}>Contexta</span>
         {session?.user && (
           <form action={async () => { "use server"; await signOut(); }}>
             <button className="cursor-pointer text-sm text-[#73706B] transition hover:text-[#141413]">

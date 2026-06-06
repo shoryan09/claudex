@@ -1,9 +1,9 @@
 {
-  "name": "claudiom",
+  "name": "contextis",
   "version": "0.1.0",
   "description": "Claude Code usage analytics CLI",
   "type": "module",
-  "bin": { "claudiom": "bin/claudiom.js" },
+  "bin": { "contextis": "bin/contextis.js" },
   "files": ["bin"],
   "scripts": {
     "build": "tsup && node scripts/add-shebang.mjs",
