@@ -197,7 +197,10 @@ function startWatch() {
 // ---------------------------------------------------------------------------
 const LAUNCH_LABEL = "com.claudex.watch";
 
-function winStartupVbsPath(): string {
+function winVbsPath(): string {
+  return path.join(getDataDir(), "claudex-watch.vbs");
+}
+function winLegacyStartupVbsPath(): string {
   const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
   const dir = path.join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
   return path.join(dir, "claudex-watch.vbs");
@@ -231,15 +234,30 @@ async function enableAutostart() {
   const { node, script } = target;
   try {
     if (process.platform === "win32") {
-      const vbs = winStartupVbsPath();
-      fs.mkdirSync(path.dirname(vbs), { recursive: true });
+      // hidden launcher VBS in a stable location (the data dir)
+      const vbs = winVbsPath();
       const nodeQ = node.replace(/"/g, '""');
       const scriptQ = script.replace(/"/g, '""');
       const content =
         `Set s = CreateObject("WScript.Shell")\r\n` +
         `s.Run Chr(34) & "${nodeQ}" & Chr(34) & " " & Chr(34) & "${scriptQ}" & Chr(34) & " watch", 0, False\r\n`;
       fs.writeFileSync(vbs, content);
-      console.log(`Auto-start enabled (Windows Startup): ${vbs}`);
+      // remove the legacy Startup-folder launcher from older versions (avoids double-launch)
+      try { const old = winLegacyStartupVbsPath(); if (fs.existsSync(old)) fs.unlinkSync(old); } catch { /* ignore */ }
+      // register a per-user logon Scheduled Task via a .ps1 file (avoids inline-quoting issues)
+      const ps1 = path.join(getDataDir(), "register-autostart.ps1");
+      const vbsLit = vbs.replace(/'/g, "''");
+      const regScript =
+        `$ErrorActionPreference = 'Stop'\r\n` +
+        `$vbs = '${vbsLit}'\r\n` +
+        `$a = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument ('"' + $vbs + '"')\r\n` +
+        `$t = New-ScheduledTaskTrigger -AtLogOn\r\n` +
+        `$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)\r\n` +
+        `Register-ScheduledTask -TaskName 'claudex-watch' -Action $a -Trigger $t -Settings $s -Force | Out-Null\r\n`;
+      fs.writeFileSync(ps1, regScript);
+      execFileSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+      console.log("Auto-start enabled (Windows logon task: claudex-watch).");
     } else if (process.platform === "darwin") {
       const plist = macPlistPath();
       fs.mkdirSync(path.dirname(plist), { recursive: true });
@@ -277,15 +295,22 @@ async function enableAutostart() {
       console.log("Auto-start enabled (auto-launch).");
     }
   } catch (e: any) {
-    console.log(`(Auto-start not set: ${e.message}. Run 'claudex watch' manually if needed.)`);
+    const detail = (e && e.stderr && String(e.stderr).trim()) || (e && e.message) || String(e);
+    console.log(`(Auto-start not set: ${detail}. Run 'claudex watch' manually if needed.)`);
   }
 }
 
 async function disableAutostart() {
   try {
     if (process.platform === "win32") {
-      const vbs = winStartupVbsPath();
+      try {
+        execFileSync("powershell.exe",
+          ["-NoProfile", "-Command", "Unregister-ScheduledTask -TaskName 'claudex-watch' -Confirm:$false"],
+          { stdio: "ignore" });
+      } catch { /* task may not exist */ }
+      const vbs = winVbsPath();
       if (fs.existsSync(vbs)) fs.unlinkSync(vbs);
+      try { const old = winLegacyStartupVbsPath(); if (fs.existsSync(old)) fs.unlinkSync(old); } catch { /* ignore */ }
       console.log("Auto-start disabled.");
     } else if (process.platform === "darwin") {
       const plist = macPlistPath();
