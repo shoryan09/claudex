@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-// collect.ts — claudex CLI: login / sync / watch / status / enable / disable
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -187,14 +185,6 @@ function startWatch() {
   console.log(`Watching ${PROJECTS_DIR} — Ctrl+C to stop.`);
 }
 
-// ---------------------------------------------------------------------------
-// run-at-login registration — native per-OS, best-effort, never crashes login
-//   Windows : hidden VBS in the user Startup folder
-//   macOS   : LaunchAgent plist + launchctl load
-//   other   : best-effort via auto-launch (Linux etc.)
-// Absolute paths to node + the built script are baked in, so it does not
-// depend on PATH being set at login.
-// ---------------------------------------------------------------------------
 const LAUNCH_LABEL = "com.claudex.watch";
 
 function winVbsPath(): string {
@@ -209,9 +199,6 @@ function macPlistPath(): string {
   return path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCH_LABEL}.plist`);
 }
 
-// Resolve the node binary + the script to run at boot.
-// Returns null if running from a .ts entry (node can't execute TS at login) —
-// the caller then tells the user to build + link first.
 function resolveTarget(): { node: string; script: string } | null {
   const node = process.execPath;
   const script = process.argv[1] ? path.resolve(process.argv[1]) : "";
@@ -234,7 +221,6 @@ async function enableAutostart() {
   const { node, script } = target;
   try {
     if (process.platform === "win32") {
-      // hidden launcher VBS in a stable location (the data dir)
       const vbs = winVbsPath();
       const nodeQ = node.replace(/"/g, '""');
       const scriptQ = script.replace(/"/g, '""');
@@ -242,9 +228,7 @@ async function enableAutostart() {
         `Set s = CreateObject("WScript.Shell")\r\n` +
         `s.Run Chr(34) & "${nodeQ}" & Chr(34) & " " & Chr(34) & "${scriptQ}" & Chr(34) & " watch", 0, False\r\n`;
       fs.writeFileSync(vbs, content);
-      // remove the legacy Startup-folder launcher from older versions (avoids double-launch)
       try { const old = winLegacyStartupVbsPath(); if (fs.existsSync(old)) fs.unlinkSync(old); } catch { /* ignore */ }
-      // register autostart via the per-user HKCU Run key (no admin required)
       const ps1 = path.join(getDataDir(), "register-autostart.ps1");
       const vbsLit = vbs.replace(/'/g, "''");
       const regScript =
@@ -283,8 +267,7 @@ async function enableAutostart() {
 </plist>
 `;
       fs.writeFileSync(plist, xml);
-      // refresh: unload an old copy if present, then load with -w (enables it)
-      try { execFileSync("launchctl", ["unload", plist], { stdio: "ignore" }); } catch { /* not loaded yet */ }
+      try { execFileSync("launchctl", ["unload", plist], { stdio: "ignore" }); } catch { }
       execFileSync("launchctl", ["load", "-w", plist], { stdio: "ignore" });
       console.log(`Auto-start enabled (macOS LaunchAgent): ${plist}`);
     } else {
@@ -307,7 +290,7 @@ async function disableAutostart() {
           ["-NoProfile", "-Command",
            "Remove-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -Name 'claudex-watch' -ErrorAction SilentlyContinue"],
           { stdio: "ignore" });
-      } catch { /* value may not exist */ }
+      } catch {  }
       const vbs = winVbsPath();
       if (fs.existsSync(vbs)) fs.unlinkSync(vbs);
       try { const old = winLegacyStartupVbsPath(); if (fs.existsSync(old)) fs.unlinkSync(old); } catch { /* ignore */ }

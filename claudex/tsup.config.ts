@@ -3,6 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["collect.ts"],
   format: ["esm"],
-  outDir: "dist",
+  target: "node16",
   clean: true,
+  banner: { js: "#!/usr/bin/env node" },
 });
