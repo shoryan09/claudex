@@ -7,14 +7,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [GitHub],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // await connectDB();
-      // const githubId = String(account?.providerAccountId ?? (profile as any)?.id ?? "");
-      // if (!githubId) return false;
-      // await User.findOneAndUpdate(
-      //   { githubId },
-      //   { $set: { name: user.name, email: user.email, image: user.image } },
-      //   { upsert: true, setDefaultsOnInsert: true }
-      // );
+      await connectDB();
+      const githubId = String(account?.providerAccountId ?? (profile as any)?.id ?? "");
+      if (!githubId) return false;
+      await User.findOneAndUpdate(
+        { githubId },
+        { $set: { name: user.name, email: user.email, image: user.image } },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
       return true;
     },
     async jwt({ token, account }) {
