@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/mongo";
 import { User } from "@/models/user";
 import { getWrapped } from "@/lib/stats";
 import AutoRefresh from "@/app/autorefresh";
+import UserMenu from "@/components/UserMenu";
 export const dynamic = "force-dynamic";
 
 const serif = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -105,7 +106,7 @@ export default async function Dashboard({
       <header className="relative border-b border-[#ECEAE2]/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contextis</Link>
-          <span className="text-sm text-[#6B6862]">{session.user.name}</span>
+          <UserMenu name={session.user.name ?? ""} />
         </div>
       </header>
 
