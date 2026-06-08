@@ -73,11 +73,10 @@ export default async function Dashboard({
   const sp = await searchParams;
   const range: "7d" | "30d" = sp.range === "7d" ? "7d" : "30d";
 
-  const session = await auth();
+  const [session] = await Promise.all([ auth(), connectDB(),]);
   if (!session?.user)
     return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#141413] text-[#F0EDE6]`}>Please sign in on the home page first. <AutoRefresh seconds={15} /></main>;
 
-  await connectDB();
   const user = await User.findOne({ githubId: (session as any).githubId });
   if (!user)
     return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#141413] text-[#F0EDE6]`}>No user found.</main>;
