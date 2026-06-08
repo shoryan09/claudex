@@ -28,7 +28,7 @@ export default async function Leaderboard({
   cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  await connectDB();
+  const [session] = await Promise.all([ auth(), connectDB(),]);
 
   const agg = await Bucket.aggregate([
     { $match: { date: { $gte: cutoffStr } } },
@@ -40,8 +40,6 @@ export default async function Leaderboard({
   const ids = agg.map((a) => a._id).filter((id: string) => mongoose.isValidObjectId(id));
   const users = await User.find({ _id: { $in: ids } }).lean();
   const userMap = new Map(users.map((u: any) => [String(u._id), u]));
-
-  const session = await auth();
 
   let meId = "";
   let meUser: any = null;
