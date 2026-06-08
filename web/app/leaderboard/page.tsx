@@ -1,6 +1,4 @@
-
 import Link from "next/link";
-import mongoose from "mongoose";
 import { Fraunces, Inter } from "next/font/google";
 import { auth } from "@/auth";
 import { connectDB } from "@/lib/mongo";
@@ -28,40 +26,42 @@ export default async function Leaderboard({
   cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  const [session] = await Promise.all([ auth(), connectDB(),]);
+  await connectDB();
 
-  const agg = await Bucket.aggregate([
-    { $match: { date: { $gte: cutoffStr } } },
-    { $group: { _id: "$owner", total: { $sum: { $add: ["$inTokens", "$outTokens", "$cacheCreate"] } } } },
-    { $sort: { total: -1 } },
-    { $limit: 50 },
+  // fetch all users + token aggregation in parallel
+  const [session, agg, allUsers] = await Promise.all([
+    auth(),
+    Bucket.aggregate([
+      { $match: { date: { $gte: cutoffStr } } },
+      { $group: { _id: "$owner", total: { $sum: { $add: ["$inTokens", "$outTokens", "$cacheCreate"] } } } },
+    ]),
+    User.find({}).lean(),
   ]);
 
-  const ids = agg.map((a) => a._id).filter((id: string) => mongoose.isValidObjectId(id));
-  const users = await User.find({ _id: { $in: ids } }).lean();
-  const userMap = new Map(users.map((u: any) => [String(u._id), u]));
+  // map userId → token total for quick lookup
+  const tokenMap = new Map<string, number>(
+    agg.map((a: any) => [String(a._id), a.total])
+  );
 
+  // find "me" from the already-fetched allUsers (no extra DB call)
   let meId = "";
-  let meUser: any = null;
   if (session?.user) {
-    meUser = await User.findOne({ githubId: (session as any).githubId }).lean();
-    meId = meUser ? String((meUser as any)._id) : "";
+    const meUser = (allUsers as any[]).find(
+      (u) => String(u.githubId) === String((session as any).githubId)
+    );
+    meId = meUser ? String(meUser._id) : "";
   }
 
-  const rows = agg.map((a, i) => {
-    const u = userMap.get(a._id) as any;
-    return { rank: i + 1, id: a._id, name: u?.name ?? "Anonymous coder", image: u?.image ?? "", total: a.total };
-  });
-
-  if (meId && meUser && !rows.some((r) => r.id === meId)) {
-    rows.push({
-      rank: rows.length + 1,
-      id: meId,
-      name: meUser.name ?? "Anonymous coder",
-      image: meUser.image ?? "",
-      total: 0,
-    });
-  }
+  // build rows for ALL signed-up users, merge token totals
+  const rows = (allUsers as any[])
+    .map((u) => ({
+      id:    String(u._id),
+      name:  u.name  ?? "Anonymous coder",
+      image: u.image ?? "",
+      total: tokenMap.get(String(u._id)) ?? 0,
+    }))
+    .sort((a, b) => b.total - a.total)
+    .map((r, i) => ({ ...r, rank: i + 1 }));
 
   const tab = (r: "7d" | "30d", label: string) => (
     <Link
@@ -92,7 +92,9 @@ export default async function Leaderboard({
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#CC785C]">Compete</p>
             <h1 className={`${serif.className} mt-2 text-4xl tracking-tight`}>Leaderboard</h1>
-            <p className="mt-1 text-sm text-[#6B6862]">Most tokens burned · last {range === "7d" ? "7" : "30"} days</p>
+            <p className="mt-1 text-sm text-[#6B6862]">
+              Most tokens burned · last {range === "7d" ? "7" : "30"} days
+            </p>
           </div>
           <div className="inline-flex rounded-full bg-[#1C1C1A] p-1">
             {tab("7d", "Week")}
@@ -103,13 +105,13 @@ export default async function Leaderboard({
         <div className="mt-8 space-y-3">
           {rows.length === 0 && (
             <div className="rounded-2xl border border-[#2C2C2A] bg-[#1C1C1A] p-8 text-center text-[#6B6862]">
-              No one's on the board yet. Be the first — sync your usage and refresh.
+              No one's signed up yet. Be the first!
             </div>
           )}
 
           {rows.map((r) => {
             const isMe = r.id === meId;
-            const top3 = r.rank <= 3;
+            const top3 = r.rank <= 3 && r.total > 0;
             return (
               <div
                 key={r.id}
@@ -132,7 +134,9 @@ export default async function Leaderboard({
                   {r.name}
                   {isMe && <span className="ml-2 text-xs text-[#CC785C]">you</span>}
                 </span>
-                <span className={`${serif.className} text-xl tabular-nums`}>{fmt(r.total)}</span>
+                <span className={`${serif.className} text-xl tabular-nums ${r.total === 0 ? "text-[#4A4845]" : ""}`}>
+                  {r.total === 0 ? "—" : fmt(r.total)}
+                </span>
               </div>
             );
           })}
