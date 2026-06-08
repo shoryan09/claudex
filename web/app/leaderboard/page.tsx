@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import mongoose from "mongoose";
 import { Fraunces, Inter } from "next/font/google";
@@ -29,7 +30,6 @@ export default async function Leaderboard({
 
   await connectDB();
 
-  // sum tokens per user over the window
   const agg = await Bucket.aggregate([
     { $match: { date: { $gte: cutoffStr } } },
     { $group: { _id: "$owner", total: { $sum: { $add: ["$inTokens", "$outTokens", "$cacheCreate"] } } } },
@@ -41,9 +41,8 @@ export default async function Leaderboard({
   const users = await User.find({ _id: { $in: ids } }).lean();
   const userMap = new Map(users.map((u: any) => [String(u._id), u]));
 
-  // who am I (for highlighting)?
   const session = await auth();
-  
+
   let meId = "";
   let meUser: any = null;
   if (session?.user) {
@@ -57,20 +56,20 @@ export default async function Leaderboard({
   });
 
   if (meId && meUser && !rows.some((r) => r.id === meId)) {
-  rows.push({
-    rank: rows.length + 1,
-    id: meId,
-    name: meUser.name ?? "Anonymous coder",
-    image: meUser.image ?? "",
-    total: 0,
-  });
-}
+    rows.push({
+      rank: rows.length + 1,
+      id: meId,
+      name: meUser.name ?? "Anonymous coder",
+      image: meUser.image ?? "",
+      total: 0,
+    });
+  }
 
   const tab = (r: "7d" | "30d", label: string) => (
     <Link
       href={`/leaderboard?range=${r}`}
       className={`cursor-pointer rounded-full px-4 py-1.5 text-sm transition ${
-        range === r ? "bg-white text-[#141413] shadow-sm" : "text-[#6B6862] hover:text-[#141413]"
+        range === r ? "bg-[#2C2C2A] text-[#F0EDE6] shadow-sm" : "text-[#9B988F] hover:text-[#F0EDE6]"
       }`}
     >
       {label}
@@ -78,14 +77,14 @@ export default async function Leaderboard({
   );
 
   return (
-    <main className={`${sans.className} min-h-screen bg-[#FAF9F5] text-[#141413]`}>
-      <header className="border-b border-[#ECEAE2]">
+    <main className={`${sans.className} min-h-screen bg-[#141413] text-[#F0EDE6]`}>
+      <header className="border-b border-[#2C2C2A]">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contextis</Link>
           {session?.user ? (
-            <Link href="/dashboard" className="text-sm text-[#6B6862] transition hover:text-[#141413]">My dashboard</Link>
+            <Link href="/dashboard" className="text-sm text-[#9B988F] transition hover:text-[#F0EDE6]">My dashboard</Link>
           ) : (
-            <Link href="/" className="text-sm text-[#6B6862] transition hover:text-[#141413]">Sign in</Link>
+            <Link href="/" className="text-sm text-[#9B988F] transition hover:text-[#F0EDE6]">Sign in</Link>
           )}
         </div>
       </header>
@@ -95,9 +94,9 @@ export default async function Leaderboard({
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#CC785C]">Compete</p>
             <h1 className={`${serif.className} mt-2 text-4xl tracking-tight`}>Leaderboard</h1>
-            <p className="mt-1 text-sm text-[#9B988F]">Most tokens burned · last {range === "7d" ? "7" : "30"} days</p>
+            <p className="mt-1 text-sm text-[#6B6862]">Most tokens burned · last {range === "7d" ? "7" : "30"} days</p>
           </div>
-          <div className="inline-flex rounded-full bg-[#F0EEE6] p-1">
+          <div className="inline-flex rounded-full bg-[#1C1C1A] p-1">
             {tab("7d", "Week")}
             {tab("30d", "Month")}
           </div>
@@ -105,7 +104,7 @@ export default async function Leaderboard({
 
         <div className="mt-8 space-y-3">
           {rows.length === 0 && (
-            <div className="rounded-2xl border border-[#ECEAE2] bg-white p-8 text-center text-[#9B988F]">
+            <div className="rounded-2xl border border-[#2C2C2A] bg-[#1C1C1A] p-8 text-center text-[#6B6862]">
               No one's on the board yet. Be the first — sync your usage and refresh.
             </div>
           )}
@@ -116,18 +115,18 @@ export default async function Leaderboard({
             return (
               <div
                 key={r.id}
-                className={`flex items-center gap-4 rounded-2xl border px-5 py-4 shadow-[0_1px_2px_rgba(20,20,19,0.04)] ${
-                  isMe ? "border-[#CC785C] bg-[#F7ECE6]" : "border-[#ECEAE2] bg-white"
+                className={`flex items-center gap-4 rounded-2xl border px-5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${
+                  isMe ? "border-[#CC785C] bg-[#2A1A14]" : "border-[#2C2C2A] bg-[#1C1C1A]"
                 }`}
               >
-                <span className={`${serif.className} w-7 text-center text-2xl tabular-nums ${top3 ? "text-[#CC785C]" : "text-[#C4C0B6]"}`}>
+                <span className={`${serif.className} w-7 text-center text-2xl tabular-nums ${top3 ? "text-[#CC785C]" : "text-[#4A4845]"}`}>
                   {r.rank}
                 </span>
                 {r.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={r.image} alt="" width={36} height={36} className="rounded-full" />
                 ) : (
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F0EEE6] text-sm text-[#9B988F]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#242422] text-sm text-[#6B6862]">
                     {r.name.charAt(0)}
                   </span>
                 )}
@@ -141,7 +140,7 @@ export default async function Leaderboard({
           })}
         </div>
 
-        <p className="mt-8 text-center text-xs text-[#9B988F]">
+        <p className="mt-8 text-center text-xs text-[#6B6862]">
           Onwards and Upwards 🚀
         </p>
       </div>

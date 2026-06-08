@@ -1,3 +1,4 @@
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Fraunces, Inter } from "next/font/google";
@@ -24,8 +25,8 @@ function fmtHour(h: number) {
 
 const COLORS = ["#CC785C", "#5E6B7D", "#7A8B6F", "#C9A87C"];
 const CARD =
-  "rounded-2xl border border-[#EEECE4] bg-white p-6 shadow-[0_1px_3px_rgba(20,20,19,0.04),0_12px_32px_-18px_rgba(20,20,19,0.12)]";
-const LABEL = "text-xs font-medium uppercase tracking-[0.14em] text-[#9B988F]";
+  "rounded-2xl border border-[#2C2C2A] bg-[#1C1C1A] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.2),0_12px_32px_-18px_rgba(0,0,0,0.3)]";
+const LABEL = "text-xs font-medium uppercase tracking-[0.14em] text-[#6B6862]";
 
 const icons: Record<string, ReactNode> = {
   messages: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
@@ -47,7 +48,7 @@ function Donut({ data }: { data: { model: string; tokens: number }[] }) {
   let acc = 0;
   return (
     <svg viewBox="0 0 120 120" width="116" height="116">
-      <circle cx="60" cy="60" r={r} fill="none" stroke="#EFEDE4" strokeWidth="14" />
+      <circle cx="60" cy="60" r={r} fill="none" stroke="#2C2C2A" strokeWidth="14" />
       {data.map((d, i) => {
         const len = (d.tokens / total) * C;
         const el = (
@@ -58,8 +59,8 @@ function Donut({ data }: { data: { model: string; tokens: number }[] }) {
         acc += len;
         return el;
       })}
-      <text x="60" y="57" textAnchor="middle" fontSize="22" fontWeight="600" fill="#141413">{data.length}</text>
-      <text x="60" y="73" textAnchor="middle" fontSize="9" letterSpacing="1" fill="#9B988F">MODELS</text>
+      <text x="60" y="57" textAnchor="middle" fontSize="22" fontWeight="600" fill="#F0EDE6">{data.length}</text>
+      <text x="60" y="73" textAnchor="middle" fontSize="9" letterSpacing="1" fill="#6B6862">MODELS</text>
     </svg>
   );
 }
@@ -74,12 +75,12 @@ export default async function Dashboard({
 
   const session = await auth();
   if (!session?.user)
-    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#FAF9F5] text-[#141413]`}>Please sign in on the home page first. <AutoRefresh seconds={15} /></main>;
+    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#141413] text-[#F0EDE6]`}>Please sign in on the home page first. <AutoRefresh seconds={15} /></main>;
 
   await connectDB();
   const user = await User.findOne({ githubId: (session as any).githubId });
   if (!user)
-    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#FAF9F5] text-[#141413]`}>No user found.</main>;
+    return <main className={`${sans.className} flex min-h-screen items-center justify-center bg-[#141413] text-[#F0EDE6]`}>No user found.</main>;
 
   const w = await getWrapped(String(user._id), range);
   const modelTotal = w.modelSplit.reduce((s, m) => s + m.tokens, 0) || 1;
@@ -94,16 +95,16 @@ export default async function Dashboard({
 
   const tab = (r: "7d" | "30d", label: string) => (
     <Link href={`/dashboard?range=${r}`}
-      className={`cursor-pointer rounded-full px-4 py-1.5 text-sm transition ${range === r ? "bg-white text-[#141413] shadow-sm" : "text-[#6B6862] hover:text-[#141413]"}`}>
+      className={`cursor-pointer rounded-full px-4 py-1.5 text-sm transition ${range === r ? "bg-[#2C2C2A] text-[#F0EDE6] shadow-sm" : "text-[#9B988F] hover:text-[#F0EDE6]"}`}>
       {label}
     </Link>
   );
 
   return (
-    <main className={`${sans.className} relative min-h-screen overflow-hidden bg-[#FAF9F5] text-[#141413]`}>
+    <main className={`${sans.className} relative min-h-screen overflow-hidden bg-[#141413] text-[#F0EDE6]`}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-96" style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(204,120,92,0.10), transparent 70%)" }} />
 
-      <header className="relative border-b border-[#ECEAE2]/70">
+      <header className="relative border-b border-[#2C2C2A]/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contextis</Link>
           <UserMenu name={session.user.name ?? ""} />
@@ -113,15 +114,15 @@ export default async function Dashboard({
       <div className="relative mx-auto max-w-5xl px-6 py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm text-[#9B988F]">last {range === "7d" ? "7" : "30"} days</p>
+            <p className="text-sm text-[#6B6862]">last {range === "7d" ? "7" : "30"} days</p>
             <h1 className={`${serif.className} mt-1 text-4xl tracking-tight`}>Your Wrapped</h1>
           </div>
           <div className="flex items-center gap-3">
             <a href="/api/og" target="_blank"
-              className="cursor-pointer rounded-full border border-[#E0DDD2] bg-white/60 px-4 py-1.5 text-sm text-[#6B6862] transition hover:border-[#CC785C] hover:text-[#CC785C]">
+              className="cursor-pointer rounded-full border border-[#2C2C2A] bg-[#1C1C1A]/60 px-4 py-1.5 text-sm text-[#9B988F] transition hover:border-[#CC785C] hover:text-[#CC785C]">
               Share card
             </a>
-            <div className="inline-flex rounded-full bg-[#F0EEE6] p-1">{tab("7d", "Week")}{tab("30d", "Month")}</div>
+            <div className="inline-flex rounded-full bg-[#1C1C1A] p-1">{tab("7d", "Week")}{tab("30d", "Month")}</div>
           </div>
         </div>
 
@@ -142,7 +143,7 @@ export default async function Dashboard({
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#CC785C]">Archetype</p>
             <p className="mt-3 text-4xl">{w.archetype.emoji}</p>
             <p className={`${serif.className} mt-2 text-2xl leading-tight tracking-tight`}>{w.archetype.name}</p>
-            <p className="mt-2 text-sm leading-relaxed text-[#8A8782]">{w.archetype.reason}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#9B988F]">{w.archetype.reason}</p>
           </div>
         </div>
 
@@ -155,7 +156,7 @@ export default async function Dashboard({
               </span>
               <div>
                 <p className={`${serif.className} text-2xl leading-none tabular-nums`}>{s.value}</p>
-                <p className="mt-1.5 text-xs uppercase tracking-wider text-[#9B988F]">{s.label}</p>
+                <p className="mt-1.5 text-xs uppercase tracking-wider text-[#6B6862]">{s.label}</p>
               </div>
             </div>
           ))}
@@ -170,11 +171,11 @@ export default async function Dashboard({
               <div className="flex-1 space-y-2.5">
                 {w.modelSplit.map((m, i) => (
                   <div key={m.model} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-[#3F3D39]">
+                    <span className="flex items-center gap-2 text-[#D4D1CA]">
                       <span style={{ width: 9, height: 9, borderRadius: 9, backgroundColor: COLORS[i % COLORS.length] }} />
                       {m.model.replace("claude-", "")}
                     </span>
-                    <span className="tabular-nums text-[#9B988F]">{((m.tokens / modelTotal) * 100).toFixed(0)}%</span>
+                    <span className="tabular-nums text-[#6B6862]">{((m.tokens / modelTotal) * 100).toFixed(0)}%</span>
                   </div>
                 ))}
               </div>
@@ -184,13 +185,13 @@ export default async function Dashboard({
           <div className={CARD}>
             <p className={LABEL}>Busiest day</p>
             <p className={`${serif.className} mt-3 text-2xl`}>{w.busiestDay?.date ?? "—"}</p>
-            <p className="mt-1 text-sm text-[#9B988F]">{w.busiestDay ? fmt(w.busiestDay.tokens) + " tokens" : ""}</p>
+            <p className="mt-1 text-sm text-[#6B6862]">{w.busiestDay ? fmt(w.busiestDay.tokens) + " tokens" : ""}</p>
           </div>
 
           <div className={CARD}>
             <p className={LABEL}>Busiest hour</p>
             <p className={`${serif.className} mt-3 text-2xl`}>{w.busiestHour ? fmtHour(w.busiestHour.hour) : "—"}</p>
-            <p className="mt-1 text-sm text-[#9B988F]">{w.busiestHour ? fmt(w.busiestHour.tokens) + " tokens" : ""}</p>
+            <p className="mt-1 text-sm text-[#6B6862]">{w.busiestHour ? fmt(w.busiestHour.tokens) + " tokens" : ""}</p>
           </div>
         </div>
 
@@ -203,7 +204,7 @@ export default async function Dashboard({
           </span>
           <div>
             <p className={LABEL}>Insight</p>
-            <p className="mt-1.5 text-[15px] leading-relaxed text-[#3F3D39]">{w.insight}</p>
+            <p className="mt-1.5 text-[15px] leading-relaxed text-[#D4D1CA]">{w.insight}</p>
           </div>
         </div>
 
@@ -214,10 +215,10 @@ export default async function Dashboard({
             {w.topProjects.map((p) => (
               <div key={p.project}>
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium text-[#3F3D39]">{p.project}</span>
-                  <span className="tabular-nums text-[#9B988F]">{fmt(p.tokens)}</span>
+                  <span className="font-medium text-[#D4D1CA]">{p.project}</span>
+                  <span className="tabular-nums text-[#6B6862]">{fmt(p.tokens)}</span>
                 </div>
-                <div className="mt-2 h-2.5 rounded-full bg-[#F0EEE6]">
+                <div className="mt-2 h-2.5 rounded-full bg-[#2C2C2A]">
                   <div className="h-2.5 rounded-full" style={{ width: `${(p.tokens / topMax) * 100}%`, background: "linear-gradient(90deg, #CC785C, #D98E72)" }} />
                 </div>
               </div>

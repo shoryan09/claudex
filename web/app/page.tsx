@@ -26,13 +26,13 @@ export default async function Home() {
   }
 
   return (
-    <main className={`${sans.className} flex min-h-screen flex-col bg-[#FAF9F5] text-[#141413]`}>
+    <main className={`${sans.className} flex min-h-screen flex-col bg-[#141413] text-[#F0EDE6]`}>
       {/* top bar */}
       <header className="flex items-center justify-between px-8 py-6">
         <span className={`${serif.className} text-xl font-medium tracking-tight`}>Contextis</span>
         {session?.user && (
           <form action={async () => { "use server"; await signOut(); }}>
-            <button className="cursor-pointer text-sm text-[#73706B] transition hover:text-[#141413]">
+            <button className="cursor-pointer text-sm text-[#8C8984] transition hover:text-[#F0EDE6]">
               Sign out
             </button>
           </form>
@@ -50,14 +50,14 @@ export default async function Home() {
             <h1 className={`${serif.className} mt-5 text-5xl leading-[1.1] tracking-tight`}>
               See how you code with Claude.
             </h1>
-            <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-[#6B6862]">
+            <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-[#9B988F]">
               Your tokens, models, and coding habits — quietly tracked and turned
               into a personal recap.
             </p>
 
             <form className="mt-9" action={async () => { "use server"; await signIn("github"); }}>
               <button
-                className="inline-flex cursor-pointer items-center gap-3 rounded-full bg-[#141413] px-7 py-3.5 text-[15px] font-medium text-[#FAF9F5] shadow-sm transition hover:bg-black hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC785C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF9F5]"
+                className="inline-flex cursor-pointer items-center gap-3 rounded-full bg-[#F0EDE6] px-7 py-3.5 text-[15px] font-medium text-[#141413] shadow-sm transition hover:bg-[#E4E1DA] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC785C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#141413]"
               >
                 <GitHubIcon />
                 Sign in with GitHub
@@ -66,12 +66,12 @@ export default async function Home() {
 
             <Link
               href="/leaderboard"
-              className="mt-6 inline-block text-sm text-[#6B6862] underline-offset-4 transition hover:text-[#CC785C] hover:underline"
+              className="mt-6 inline-block text-sm text-[#9B988F] underline-offset-4 transition hover:text-[#CC785C] hover:underline"
             >
               Or peek at the leaderboard →
             </Link>
 
-            <p className="mt-6 text-xs text-[#9B988F]">
+            <p className="mt-6 text-xs text-[#6B6862]">
               Only aggregate stats are stored — never your code or prompts.
             </p>
           </div>
@@ -81,24 +81,24 @@ export default async function Home() {
             <h1 className={`${serif.className} text-4xl tracking-tight`}>
               Welcome back, {session.user.name?.split(" ")[0] ?? "there"}.
             </h1>
-            <p className="mt-3 text-[15px] text-[#6B6862]">
+            <p className="mt-3 text-[15px] text-[#9B988F]">
               Install the CLI, connect it with your personal token, then run a sync.
             </p>
 
             <div className="mt-7">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#9B988F]">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#6B6862]">
                 Your CLI token
               </p>
-              <pre className="overflow-x-auto rounded-xl border border-[#E5E2D9] bg-[#F0EEE6] px-4 py-3 font-mono text-sm text-[#141413]">
+              <pre className="overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 font-mono text-sm text-[#F0EDE6]">
                 {cliToken || "—"}
               </pre>
             </div>
 
             <div className="mt-5">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#9B988F]">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#6B6862]">
                 Connect your CLI
               </p>
-              <pre className="overflow-x-auto rounded-xl border border-[#E5E2D9] bg-[#F0EEE6] px-4 py-3 font-mono text-sm text-[#6B6862]">
+              <pre className="overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 font-mono text-sm text-[#9B988F]">
                 {`npm install -g contextis\ncontextis login ${cliToken} --server https://contextis.vercel.app/api/ingest`}
               </pre>
             </div>
@@ -106,13 +106,13 @@ export default async function Home() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/dashboard"
-                className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#141413] px-7 py-3.5 text-[15px] font-medium text-[#FAF9F5] shadow-sm transition hover:bg-black hover:shadow-md"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#F0EDE6] px-7 py-3.5 text-[15px] font-medium text-[#141413] shadow-sm transition hover:bg-[#E4E1DA] hover:shadow-md"
               >
                 Open your dashboard <span aria-hidden>→</span>
               </Link>
               <Link
                 href="/leaderboard"
-                className="inline-flex cursor-pointer items-center rounded-full border border-[#E0DDD2] px-7 py-3.5 text-[15px] font-medium text-[#141413] transition hover:border-[#CC785C] hover:text-[#CC785C]"
+                className="inline-flex cursor-pointer items-center rounded-full border border-[#2C2C2A] px-7 py-3.5 text-[15px] font-medium text-[#F0EDE6] transition hover:border-[#CC785C] hover:text-[#CC785C]"
               >
                 Leaderboard
               </Link>
