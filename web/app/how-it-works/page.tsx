@@ -75,12 +75,6 @@ export default function HowItWorks() {
             >
               Get started →
             </Link>
-            <Link
-              href="/leaderboard"
-              className="inline-flex items-center rounded-full border border-[#2C2C2A] px-7 py-3.5 text-[15px] font-medium text-[#F0EDE6] transition hover:border-[#CC785C] hover:text-[#CC785C]"
-            >
-              View leaderboard
-            </Link>
           </div>
         </div>
       </div>
