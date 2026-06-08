@@ -76,18 +76,8 @@ export default async function Leaderboard({
 
   return (
     <main className={`${sans.className} min-h-screen bg-[#141413] text-[#F0EDE6]`}>
-      <header className="border-b border-[#2C2C2A]">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-          <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contextis</Link>
-          {session?.user ? (
-            <Link href="/dashboard" className="text-sm text-[#9B988F] transition hover:text-[#F0EDE6]">My dashboard</Link>
-          ) : (
-            <Link href="/" className="text-sm text-[#9B988F] transition hover:text-[#F0EDE6]">Sign in</Link>
-          )}
-        </div>
-      </header>
 
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mx-auto max-w-3xl px-6 pt-24 pb-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#CC785C]">Compete</p>

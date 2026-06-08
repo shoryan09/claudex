@@ -26,27 +26,7 @@ export default async function Home() {
   }
 
   return (
-    <main className={`${sans.className} flex min-h-screen flex-col bg-[#141413] text-[#F0EDE6]`}>
-      {/* top bar */}
-      <header className="flex items-center justify-between px-8 py-6">
-        <span className={`${serif.className} text-xl font-medium tracking-tight`}>Contextis</span>
-        {session?.user && (
-  <div className="flex items-center gap-5">
-    <Link
-      href="/how-it-works"
-      className="text-sm text-[#9B988F] transition hover:text-[#F0EDE6]"
-    >
-      How it works
-    </Link>
-
-    <form action={async () => { "use server"; await signOut(); }}>
-      <button className="cursor-pointer text-sm text-[#9B988F] transition hover:text-[#F0EDE6]">
-        Sign out
-      </button>
-    </form>
-  </div>
-)}
-      </header>
+    <main className={`${sans.className} flex min-h-screen flex-col bg-[#141413] text-[#F0EDE6] pt-16`}>
 
       {/* center */}
       <div className="flex flex-1 items-center justify-center px-6 pb-24">

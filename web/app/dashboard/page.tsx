@@ -103,14 +103,7 @@ export default async function Dashboard({
     <main className={`${sans.className} relative min-h-screen overflow-hidden bg-[#141413] text-[#F0EDE6]`}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-96" style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(204,120,92,0.10), transparent 70%)" }} />
 
-      <header className="relative border-b border-[#2C2C2A]/70">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/" className={`${serif.className} text-lg font-medium tracking-tight`}>Contextis</Link>
-          <UserMenu name={session.user.name ?? ""} />
-        </div>
-      </header>
-
-      <div className="relative mx-auto max-w-5xl px-6 py-10">
+      <div className="relative mx-auto max-w-5xl px-6 py-10 pt-20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm text-[#6B6862]">last {range === "7d" ? "7" : "30"} days</p>
