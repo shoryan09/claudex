@@ -1,114 +1,125 @@
 import Link from "next/link";
 import { Fraunces, Inter } from "next/font/google";
-import { auth, signIn, signOut } from "@/auth";
-import { connectDB } from "@/lib/mongo";
-import { User } from "@/models/user";
+import { auth, signIn } from "@/auth";
 
 const serif = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600"] });
 const sans = Inter({ subsets: ["latin"] });
 
-function GitHubIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-      <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.96-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z" />
-    </svg>
-  );
+async function githubSignIn() {
+  "use server";
+  await signIn("github", { redirectTo: "/dashboard" });
 }
+
+const MODELS = ["Opus 4.8", "Fable 5", "Sonnet 4.6", "Haiku 4.5", "Claude Code"];
+
+const FAQ = [
+  ["What is Contextis?", "A usage analytics platform for Claude Code. A CLI reads your local logs, syncs to the cloud, and a dashboard turns opaque AI usage into tokens burned, dollars spent, model splits, streaks, and a global leaderboard."],
+  ["How long does setup take?", "Under a minute. npm install -g contextis, sign in with GitHub, paste your token. It autostarts in the background from then on."],
+  ["What does it cost?", "Free. The CLI is on npm and the dashboard is open. No card, no trial."],
+  ["Where does my data live?", "Your Claude Code logs are read locally and synced to your own account. Only you see your personal stats; the leaderboard shows aggregate token/cost totals."],
+  ["Which models does it track?", "Every Claude tier — Opus, Sonnet, Haiku, and Fable 5 — with per-model cost based on current API pricing."],
+];
 
 export default async function Home() {
   const session = await auth();
-
-  let cliToken = "";
-  if (session?.user) {
-    await connectDB();
-    const user = await User.findOne({ githubId: (session as any).githubId });
-    cliToken = user?.cliToken ?? "";
-  }
+  const signedIn = !!session?.user;
 
   return (
-    <main className={`${sans.className} flex min-h-screen flex-col bg-[#141413] text-[#F0EDE6] pt-16`}>
+    <main className={`${sans.className} min-h-screen bg-[#141413] text-[#F0EDE6]`}>
+      <style>{`
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .marquee { animation: marquee 28s linear infinite; }
+      `}</style>
 
-      {/* center */}
-      <div className="flex flex-1 items-center justify-center px-6 pb-24">
-        {!session?.user ? (
-          /* ---------- signed out ---------- */
-          <div className="w-full max-w-md text-center">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#CC785C]">
-              Claude Code, wrapped
-            </p>
-            <h1 className={`${serif.className} mt-5 text-5xl leading-[1.1] tracking-tight`}>
-              See how you code with Claude.
-            </h1>
-            <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-[#9B988F]">
-              Your tokens, models, and coding habits — quietly tracked and turned
-              into a personal recap.
-            </p>
+      {/* ───────────── hero ───────────── */}
+      <section className="mx-auto max-w-3xl px-6 pt-32 pb-14 text-center">
+        <h1 className={`${serif.className} text-5xl leading-[1.05] tracking-tight sm:text-6xl`}>
+          You should know where
+          <br />
+          <span className="text-[#CC785C]">every token goes.</span>
+        </h1>
 
-            <form className="mt-9" action={async () => { "use server"; await signIn("github"); }}>
-              <button
-                className="inline-flex cursor-pointer items-center gap-3 rounded-full bg-[#F0EDE6] px-7 py-3.5 text-[15px] font-medium text-[#141413] shadow-sm transition hover:bg-[#E4E1DA] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC785C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#141413]"
-              >
-                <GitHubIcon />
+        <p className="mx-auto mt-6 max-w-xl text-lg text-[#9B988F]">
+          Tokens burned, dollars spent, model splits — one install, runs in the background.
+        </p>
+
+        <div className="mt-9 flex items-center justify-center gap-3">
+          {signedIn ? (
+            <Link href="/dashboard" className="rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
+              Open dashboard →
+            </Link>
+          ) : (
+            <form action={githubSignIn}>
+              <button type="submit" className="flex items-center gap-2 rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
+                <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+                </svg>
                 Sign in with GitHub
               </button>
             </form>
+          )}
+        </div>
 
-            <Link
-              href="/leaderboard"
-              className="mt-6 inline-block text-sm text-[#9B988F] underline-offset-4 transition hover:text-[#CC785C] hover:underline"
-            >
-              Or peek at the leaderboard →
-            </Link>
+        <code className="mt-8 inline-block rounded-lg border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-2 text-sm text-[#9B988F]">
+          npm install -g contextis
+        </code>
+      </section>
 
-            <p className="mt-6 text-xs text-[#6B6862]">
-              Only aggregate stats are stored — never your code or prompts.
+      {/* ───────────── model marquee ───────────── */}
+      <section className="border-y border-[#2C2C2A] py-7 overflow-hidden">
+        <p className="mb-5 text-center text-xs uppercase tracking-[0.14em] text-[#6B6862]">
+          Tracks every Claude tier
+        </p>
+        <div className="flex w-max marquee">
+          {[...MODELS, ...MODELS, ...MODELS, ...MODELS].map((m, i) => (
+            <span key={i} className={`${serif.className} mx-8 whitespace-nowrap text-2xl text-[#4A4845]`}>
+              {m}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* ───────────── feature spotlight ───────────── */}
+      <section className="mx-auto max-w-5xl px-6 pb-24 pt-12">
+        <div className="grid items-center gap-10 rounded-3xl border border-[#2C2C2A] bg-[#1C1C1A] p-10 sm:grid-cols-2">
+          <div>
+            <p className="text-xs uppercase tracking-[0.14em] text-[#CC785C]">Cost, not just tokens</p>
+            <h3 className={`${serif.className} mt-3 text-2xl tracking-tight`}>
+              Know the dollar number, per model.
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-[#9B988F]">
+              Opus, Sonnet, Haiku, Fable — each priced at current API rates. The leaderboard
+              ranks by spend by default, so you finally see what your AI habit actually costs.
             </p>
           </div>
-        ) : (
-          /* ---------- signed in ---------- */
-          <div className="w-full max-w-lg">
-            <h1 className={`${serif.className} text-4xl tracking-tight`}>
-              Welcome back, {session.user.name?.split(" ")[0] ?? "there"}.
-            </h1>
-            <p className="mt-3 text-[15px] text-[#9B988F]">
-              Install the CLI, connect it with your personal token, then run a sync.
-            </p>
-
-            <div className="mt-7">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#6B6862]">
-                Your CLI token
-              </p>
-              <pre className="overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 font-mono text-sm text-[#F0EDE6]">
-                {cliToken || "—"}
-              </pre>
-            </div>
-
-            <div className="mt-5">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#6B6862]">
-                Connect your CLI
-              </p>
-              <pre className="overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 font-mono text-sm text-[#9B988F]">
-                {`npm install -g contextis\ncontextis login ${cliToken} --server https://contextis.vercel.app/api/ingest`}
-              </pre>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#F0EDE6] px-7 py-3.5 text-[15px] font-medium text-[#141413] shadow-sm transition hover:bg-[#E4E1DA] hover:shadow-md"
-              >
-                Open your dashboard <span aria-hidden>→</span>
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="inline-flex cursor-pointer items-center rounded-full border border-[#2C2C2A] px-7 py-3.5 text-[15px] font-medium text-[#F0EDE6] transition hover:border-[#CC785C] hover:text-[#CC785C]"
-              >
-                Leaderboard
-              </Link>
-            </div>
+          <div className="flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br from-[#242422] to-[#1C1C1A]">
+            <span className={`${serif.className} text-5xl text-[#CC785C]`}>$1.2k</span>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* ───────────── faq ───────────── */}
+      <section className="mx-auto max-w-2xl px-6 pb-24">
+        <p className="text-center text-xs uppercase tracking-[0.14em] text-[#6B6862]">FAQ</p>
+        <h2 className={`${serif.className} mt-3 text-center text-3xl tracking-tight`}>Questions</h2>
+        <div className="mt-10 divide-y divide-[#2C2C2A] border-y border-[#2C2C2A]">
+          {FAQ.map(([q, a], i) => (
+            <details key={i} className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[#F0EDE6]">
+                <span className="text-sm font-medium">{q}</span>
+                <span className="text-[#6B6862] transition group-open:rotate-45">+</span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#9B988F]">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* ───────────── final cta ───────────── */}
+      <section className="mx-auto max-w-3xl px-6 pb-28 text-center">
+        <h2 className={`${serif.className} text-4xl tracking-tight`}>Start measuring today.</h2>
+        <p className="mt-3 text-[#9B988F]">The longer you wait, the more invisible spend you miss.</p>
+      </section>
     </main>
   );
 }
