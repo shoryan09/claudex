@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -62,7 +61,7 @@ export default function Navbar({ user }: { user: NavUser }) {
             How it works
           </Link>
 
-          {user ? (
+          {user && (
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => { setOpen((o) => !o); setConfirmDelete(false); }}
@@ -116,13 +115,6 @@ export default function Navbar({ user }: { user: NavUser }) {
                 </div>
               )}
             </div>
-          ) : (
-            <Link
-              href="/"
-              className="rounded-full bg-[#F0EDE6] px-4 py-1.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]"
-            >
-              Sign in
-            </Link>
           )}
         </div>
       </nav>
