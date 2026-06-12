@@ -32,15 +32,9 @@ export default async function Home() {
     await connectDB();
     const me = await User.findOne(
       { githubId: (session as any).githubId },
-      { token: 1, apiToken: 1, ingestToken: 1, cliToken: 1 }
+      { cliToken: 1 }
     ).lean();
-    // 👇 if the command shows "<your-token>", swap this for your actual field name
-    const token =
-      (me as any)?.token ??
-      (me as any)?.apiToken ??
-      (me as any)?.ingestToken ??
-      (me as any)?.cliToken ??
-      "<your-token>";
+    const token = (me as any)?.cliToken ?? "<your-token>";
     const firstName = session!.user!.name?.split(" ")[0] ?? "there";
 
     return (
