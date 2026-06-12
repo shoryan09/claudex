@@ -7,7 +7,7 @@ const sans = Inter({ subsets: ["latin"] });
 
 async function githubSignIn() {
   "use server";
-  await signIn("github", { redirectTo: "/dashboard" });
+  await signIn("github", { redirectTo: "/" });
 }
 
 const MODELS = ["Opus 4.8", "Fable 5", "Sonnet 4.6", "Haiku 4.5", "Claude Code"];
@@ -24,6 +24,51 @@ export default async function Home() {
   const session = await auth();
   const signedIn = !!session?.user;
 
+  /* ════════════════ SIGNED-IN: minimal setup screen ════════════════ */
+  if (signedIn) {
+    // TODO: replace with the user's real ingest token
+    // e.g. fetch after connectDB(): const token = user.apiToken;
+    const token = "<your-token>";
+    const firstName = session!.user!.name?.split(" ")[0] ?? "there";
+
+    return (
+      <main className={`${sans.className} flex min-h-screen flex-col items-center justify-center bg-[#141413] px-6 py-24 text-center text-[#F0EDE6]`}>
+        <p className="text-xs uppercase tracking-[0.14em] text-[#CC785C]">You&apos;re in, {firstName}</p>
+        <h1 className={`${serif.className} mt-3 text-3xl tracking-tight sm:text-4xl`}>
+          Connect your CLI
+        </h1>
+        <p className="mt-2 max-w-sm text-sm text-[#9B988F]">
+          Two commands and you&apos;re tracking. It runs in the background from then on.
+        </p>
+
+        <div className="mt-9 w-full max-w-md space-y-4 text-left">
+          <div>
+            <p className="mb-1.5 text-xs text-[#6B6862]">1 · Install</p>
+            <code className="block overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 text-sm text-[#D4D1CA]">
+              npm install -g contextis
+            </code>
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs text-[#6B6862]">2 · Connect</p>
+            <code className="block overflow-x-auto rounded-xl border border-[#2C2C2A] bg-[#1C1C1A] px-4 py-3 text-sm text-[#D4D1CA]">
+              contextis login {token}
+            </code>
+          </div>
+        </div>
+
+        <div className="mt-9 flex items-center justify-center gap-3">
+          <Link href="/dashboard" className="rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
+            Open dashboard →
+          </Link>
+          <Link href="/leaderboard" className="rounded-full border border-[#2C2C2A] px-5 py-2.5 text-sm text-[#D4D1CA] transition hover:border-[#383836]">
+            Leaderboard
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  /* ════════════════ SIGNED-OUT: marketing landing ════════════════ */
   return (
     <main className={`${sans.className} min-h-screen bg-[#141413] text-[#F0EDE6]`}>
       <style>{`
@@ -44,20 +89,14 @@ export default async function Home() {
         </p>
 
         <div className="mt-9 flex items-center justify-center gap-3">
-          {signedIn ? (
-            <Link href="/dashboard" className="rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
-              Open dashboard →
-            </Link>
-          ) : (
-            <form action={githubSignIn}>
-              <button type="submit" className="flex cursor-pointer items-center gap-2 rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
-                <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-                </svg>
-                Sign in with GitHub
-              </button>
-            </form>
-          )}
+          <form action={githubSignIn}>
+            <button type="submit" className="flex cursor-pointer items-center gap-2 rounded-full bg-[#F0EDE6] px-5 py-2.5 text-sm font-medium text-[#141413] transition hover:bg-[#E4E1DA]">
+              <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+              </svg>
+              Sign in with GitHub
+            </button>
+          </form>
           <Link href="/leaderboard" className="rounded-full border border-[#2C2C2A] px-5 py-2.5 text-sm text-[#D4D1CA] transition hover:border-[#383836]">
             Leaderboard
           </Link>
