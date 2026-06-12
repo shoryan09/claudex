@@ -49,7 +49,9 @@ export async function getWrapped(
   const hourSet = new Set<string>();
 
   for (const b of buckets) {
-    const spend = (b.inTokens || 0) + (b.outTokens || 0) + (b.cacheCreate || 0);
+    // all four token types — matches the leaderboard's definition
+    const spend =
+      (b.inTokens || 0) + (b.outTokens || 0) + (b.cacheCreate || 0) + (b.cacheRead || 0);
     inTokens += b.inTokens || 0;
     outTokens += b.outTokens || 0;
     cacheCreate += b.cacheCreate || 0;
@@ -64,7 +66,8 @@ export async function getWrapped(
     hourSet.add(`${b.date} ${b.hour}`);
   }
 
-  const totalTokens = inTokens + outTokens + cacheCreate;
+  // all four token types — matches the leaderboard's definition
+  const totalTokens = inTokens + outTokens + cacheCreate + cacheRead;
 
   const modelSplit = [...byModel.entries()]
     .map(([model, tokens]) => ({ model, tokens }))

@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
   catch { return NextResponse.json({ error: "bad json" }, { status: 400 }); }
 
   const buckets = Array.isArray(body?.buckets) ? body.buckets : [];
+  // empty payload is a valid no-op (e.g. right after login/state reset)
   if (buckets.length === 0)
-    return NextResponse.json({ error: "no buckets" }, { status: 400 });
+    return NextResponse.json({ ok: true, written: 0, upserted: 0, modified: 0 });
 
   await connectDB();
 
@@ -63,8 +64,9 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // nothing survived validation — treat as a no-op so the CLI advances cleanly
   if (ops.length === 0)
-    return NextResponse.json({ error: "no valid buckets" }, { status: 400 });
+    return NextResponse.json({ ok: true, written: 0, upserted: 0, modified: 0 });
 
   const res = await Bucket.bulkWrite(ops);
   return NextResponse.json({
