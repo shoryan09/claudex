@@ -18,7 +18,7 @@ const STEPS = [
   {
     title: "Connect your token",
     desc: "Link the CLI to your account. Your token is shown on the home page after signing in.",
-    code: "contextis login <your-token> --server https://contextis.vercel.app/api/ingest",
+    code: "contextis login <your-token>",
   },
   {
     title: "Code with Claude",
